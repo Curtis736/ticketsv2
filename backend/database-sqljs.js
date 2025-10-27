@@ -8,7 +8,13 @@ let SQL;
 async function init() {
   SQL = await initSqlJs();
   
-  const dbPath = path.join(__dirname, 'tickets.db');
+  // Create data directory if it doesn't exist
+  const dataDir = path.join(__dirname, 'data');
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+  
+  const dbPath = path.join(dataDir, 'tickets.db');
   
   // Load existing database or create new one
   let shouldCreateTables = false;
