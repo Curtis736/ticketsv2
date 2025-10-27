@@ -13,7 +13,7 @@ services:
       - SENDGRID_FROM_EMAIL=${SENDGRID_FROM_EMAIL}
       - ADMIN_EMAIL=${ADMIN_EMAIL}
     volumes:
-      - db-data:/app
+      - db-data:/app/data
     restart: unless-stopped
     networks:
       - ticket-network
