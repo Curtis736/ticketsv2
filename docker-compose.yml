@@ -13,7 +13,7 @@ services:
       - SENDGRID_FROM_EMAIL=${SENDGRID_FROM_EMAIL}
       - ADMIN_EMAIL=${ADMIN_EMAIL}
     volumes:
-      - ./backend/tickets.db:/app/tickets.db
+      - db-data:/app
     restart: unless-stopped
     networks:
       - ticket-network
@@ -32,4 +32,7 @@ services:
 networks:
   ticket-network:
     driver: bridge
+
+volumes:
+  db-data:
 
