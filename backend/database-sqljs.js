@@ -98,7 +98,11 @@ function saveDatabase() {
   if (!db) return;
   
   try {
-    const dbPath = path.join(__dirname, 'tickets.db');
+    const dataDir = path.join(__dirname, 'data');
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+    const dbPath = path.join(dataDir, 'tickets.db');
     const data = db.export();
     const buffer = Buffer.from(data);
     fs.writeFileSync(dbPath, buffer);
