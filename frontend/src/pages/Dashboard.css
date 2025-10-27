@@ -225,14 +225,30 @@
 
 .quick-actions {
   margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
 }
 
 .quick-actions select {
-  width: 100%;
+  flex: 1;
   padding: 0.5rem;
   border: 1px solid #ddd;
   border-radius: 5px;
   cursor: pointer;
+}
+
+.btn-delete {
+  padding: 0.5rem 1rem;
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.btn-delete:hover {
+  background: #d32f2f;
 }
 
 /* Admin specific */

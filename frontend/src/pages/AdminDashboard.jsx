@@ -51,6 +51,19 @@ const AdminDashboard = ({ user, onLogout }) => {
     }
   };
 
+  const handleDelete = async (ticketId) => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce ticket ?')) {
+      return;
+    }
+    try {
+      await axios.delete(`/admin/tickets/${ticketId}`);
+      fetchTickets();
+      alert('Ticket supprimé avec succès');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Erreur lors de la suppression');
+    }
+  };
+
   const getStatusColor = (status) => {
     const colors = {
       'Ouvert': '#2196F3',
@@ -150,6 +163,15 @@ const AdminDashboard = ({ user, onLogout }) => {
                         <option>Résolu</option>
                         <option>Fermé</option>
                       </select>
+                      <button 
+                        className="btn-delete"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(ticketId);
+                        }}
+                      >
+                        Supprimer
+                      </button>
                     </div>
                   </div>
                 );
