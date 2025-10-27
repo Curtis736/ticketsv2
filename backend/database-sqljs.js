@@ -11,23 +11,42 @@ async function init() {
   const dbPath = path.join(__dirname, 'tickets.db');
   
   // Load existing database or create new one
+  let shouldCreateTables = false;
+  
   if (fs.existsSync(dbPath)) {
     try {
       // Check if it's a directory
       const stats = fs.statSync(dbPath);
       if (stats.isDirectory()) {
-        console.log('⚠️ tickets.db is a directory, skipping load');
+        console.log('⚠️ tickets.db is a directory, creating new DB');
         db = new SQL.Database();
+        shouldCreateTables = true;
       } else {
         const buffer = fs.readFileSync(dbPath);
         db = new SQL.Database(buffer);
+        
+        // Check if tables exist
+        try {
+          db.exec('SELECT 1 FROM users LIMIT 1');
+          db.exec('SELECT 1 FROM tickets LIMIT 1');
+          console.log('✅ Tables exist in database');
+        } catch (err) {
+          console.log('📋 Tables do not exist, creating...');
+          shouldCreateTables = true;
+        }
       }
     } catch (err) {
       console.error('Error reading database file:', err);
       db = new SQL.Database();
+      shouldCreateTables = true;
     }
   } else {
     db = new SQL.Database();
+    shouldCreateTables = true;
+  }
+  
+  // Create tables if needed
+  if (shouldCreateTables) {
     // Create tables
     db.run(`
       CREATE TABLE IF NOT EXISTS users (
