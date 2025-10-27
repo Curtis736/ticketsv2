@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: ticket-backend
+    ports:
+      - "9050:5000"  # Port distant pour éviter conflits
+    environment:
+      - NODE_ENV=production
+      - JWT_SECRET=${JWT_SECRET:-votre-cle-secrete-changemoi-123456}
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+      - SENDGRID_FROM_EMAIL=${SENDGRID_FROM_EMAIL}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+    volumes:
+      - ./backend/tickets.db:/app/tickets.db
+    restart: unless-stopped
+    networks:
+      - ticket-network
+
+  frontend:
+    build: ./frontend
+    container_name: ticket-frontend
+    ports:
+      - "9064:3064"  # Port distant pour éviter conflits
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - ticket-network
+
+networks:
+  ticket-network:
+    driver: bridge
+
