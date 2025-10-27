@@ -12,8 +12,20 @@ async function init() {
   
   // Load existing database or create new one
   if (fs.existsSync(dbPath)) {
-    const buffer = fs.readFileSync(dbPath);
-    db = new SQL.Database(buffer);
+    try {
+      // Check if it's a directory
+      const stats = fs.statSync(dbPath);
+      if (stats.isDirectory()) {
+        console.log('⚠️ tickets.db is a directory, skipping load');
+        db = new SQL.Database();
+      } else {
+        const buffer = fs.readFileSync(dbPath);
+        db = new SQL.Database(buffer);
+      }
+    } catch (err) {
+      console.error('Error reading database file:', err);
+      db = new SQL.Database();
+    }
   } else {
     db = new SQL.Database();
     // Create tables
