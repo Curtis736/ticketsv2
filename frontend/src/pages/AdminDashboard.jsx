@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import './Dashboard.css';
 
@@ -11,9 +11,13 @@ const AdminDashboard = ({ user, onLogout }) => {
 
   useEffect(() => {
     fetchTickets();
-  }, []);
+    
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(fetchTickets, 30000);
+    return () => clearInterval(interval);
+  }, [fetchTickets]);
 
-  const fetchTickets = async () => {
+  const fetchTickets = useCallback(async () => {
     try {
       const res = await axios.get('/admin/tickets');
       setTickets(res.data);
@@ -22,7 +26,7 @@ const AdminDashboard = ({ user, onLogout }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const handleUpdate = async () => {
     try {
@@ -74,9 +78,20 @@ const AdminDashboard = ({ user, onLogout }) => {
     return colors[status] || '#999';
   };
 
-  const filteredTickets = filter === 'all' 
-    ? tickets 
-    : tickets.filter(t => t.status === filter);
+  // Memoize filtered tickets to avoid unnecessary recalculation
+  const filteredTickets = useMemo(() => {
+    return filter === 'all' 
+      ? tickets 
+      : tickets.filter(t => t.status === filter);
+  }, [tickets, filter]);
+
+  // Memoize status counts
+  const statusCounts = useMemo(() => ({
+    all: tickets.length,
+    Ouvert: tickets.filter(t => t.status === 'Ouvert').length,
+    'En cours': tickets.filter(t => t.status === 'En cours').length,
+    Résolu: tickets.filter(t => t.status === 'Résolu').length,
+  }), [tickets]);
 
   return (
     <div className="dashboard">
@@ -94,25 +109,25 @@ const AdminDashboard = ({ user, onLogout }) => {
             className={filter === 'all' ? 'filter-active' : ''} 
             onClick={() => setFilter('all')}
           >
-            Tous ({tickets.length})
+            Tous ({statusCounts.all})
           </button>
           <button 
             className={filter === 'Ouvert' ? 'filter-active' : ''} 
             onClick={() => setFilter('Ouvert')}
           >
-            Ouverts ({tickets.filter(t => t.status === 'Ouvert').length})
+            Ouverts ({statusCounts.Ouvert})
           </button>
           <button 
             className={filter === 'En cours' ? 'filter-active' : ''} 
             onClick={() => setFilter('En cours')}
           >
-            En cours ({tickets.filter(t => t.status === 'En cours').length})
+            En cours ({statusCounts['En cours']})
           </button>
           <button 
             className={filter === 'Résolu' ? 'filter-active' : ''} 
             onClick={() => setFilter('Résolu')}
           >
-            Résolus ({tickets.filter(t => t.status === 'Résolu').length})
+            Résolus ({statusCounts.Résolu})
           </button>
         </div>
 

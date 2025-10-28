@@ -2,11 +2,11 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files first for better caching
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies with cache mount
+RUN npm ci --prefer-offline --no-audit && npm cache clean --force
 
 # Copy application files
 COPY . .
@@ -28,4 +28,5 @@ EXPOSE 3064
 
 # Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
+
 

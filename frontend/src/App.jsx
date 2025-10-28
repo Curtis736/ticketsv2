@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './pages/Login';
-import PublicTicketForm from './pages/PublicTicketForm';
-import AdminDashboard from './pages/AdminDashboard';
 import axios from 'axios';
+
+// Lazy load components for better performance
+const Login = lazy(() => import('./pages/Login'));
+const PublicTicketForm = lazy(() => import('./pages/PublicTicketForm'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 
 axios.defaults.baseURL = '/api';
 
@@ -36,11 +38,13 @@ function App() {
 
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<PublicTicketForm />} />
-        <Route path="/login" element={user ? <Navigate to="/admin" /> : <Login onLogin={login} />} />
-        <Route path="/admin" element={user && user.role === 'admin' ? <AdminDashboard user={user} onLogout={logout} /> : <Navigate to="/login" />} />
-      </Routes>
+      <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Chargement...</div>}>
+        <Routes>
+          <Route path="/" element={<PublicTicketForm />} />
+          <Route path="/login" element={user ? <Navigate to="/admin" /> : <Login onLogin={login} />} />
+          <Route path="/admin" element={user && user.role === 'admin' ? <AdminDashboard user={user} onLogout={logout} /> : <Navigate to="/login" />} />
+        </Routes>
+      </Suspense>
     </Router>
   );
 }

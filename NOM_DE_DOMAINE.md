@@ -178,3 +178,4 @@ Si vous voulez `tickets.sedi-ati.com`:
 - Le nom de domaine doit pointer vers l'IP publique du serveur si accès Internet
 - Pour accès local uniquement, utilisez l'IP (192.168.1.100)
 
+

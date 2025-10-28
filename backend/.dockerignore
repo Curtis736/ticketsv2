@@ -3,4 +3,13 @@ npm-debug.log
 .env
 *.md
 test-connection.js
+.git
+.gitignore
+README.md
+*.log
+.DS_Store
+coverage
+.vscode
+.idea
+
 

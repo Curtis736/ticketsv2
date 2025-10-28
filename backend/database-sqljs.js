@@ -51,9 +51,9 @@ async function init() {
     shouldCreateTables = true;
   }
   
-  // Create tables if needed
+    // Create tables if needed
   if (shouldCreateTables) {
-    // Create tables
+    // Create tables with indexes for better performance
     db.run(`
       CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -78,6 +78,12 @@ async function init() {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
+
+      -- Create indexes for better query performance
+      CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status);
+      CREATE INDEX IF NOT EXISTS idx_tickets_created_by ON tickets(created_by);
+      CREATE INDEX IF NOT EXISTS idx_tickets_created_at ON tickets(created_at);
+      CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
     `);
     
     // Create default admin user
@@ -111,15 +117,30 @@ function saveDatabase() {
   }
 }
 
+// Escape strings to prevent SQL injection
+function escapeString(str) {
+  if (typeof str !== 'string') return str;
+  return str.replace(/'/g, "''");
+}
+
 // Run query with params
 function run(sql, params = []) {
   if (!db) return;
   
   if (params.length > 0) {
-    // Replace ? with actual values
+    // Replace ? with actual values (properly escaped)
     let query = sql;
     params.forEach((param) => {
-      const value = typeof param === 'string' ? `'${param}'` : param;
+      let value;
+      if (param === null || param === undefined) {
+        value = 'NULL';
+      } else if (typeof param === 'string') {
+        value = `'${escapeString(param)}'`;
+      } else if (typeof param === 'number') {
+        value = param;
+      } else {
+        value = `'${escapeString(String(param))}'`;
+      }
       query = query.replace('?', value);
     });
     db.run(query);
@@ -134,10 +155,21 @@ function get(sql, params = []) {
   if (!db) return null;
   
   let query = sql;
-  params.forEach((param) => {
-    const value = typeof param === 'string' ? `'${param}'` : param;
-    query = query.replace('?', value);
-  });
+  if (params.length > 0) {
+    params.forEach((param) => {
+      let value;
+      if (param === null || param === undefined) {
+        value = 'NULL';
+      } else if (typeof param === 'string') {
+        value = `'${escapeString(param)}'`;
+      } else if (typeof param === 'number') {
+        value = param;
+      } else {
+        value = `'${escapeString(String(param))}'`;
+      }
+      query = query.replace('?', value);
+    });
+  }
   
   const result = db.exec(query);
   if (result.length > 0 && result[0].values.length > 0) {
@@ -156,10 +188,21 @@ function all(sql, params = []) {
   if (!db) return [];
   
   let query = sql;
-  params.forEach((param) => {
-    const value = typeof param === 'string' ? `'${param}'` : param;
-    query = query.replace('?', value);
-  });
+  if (params.length > 0) {
+    params.forEach((param) => {
+      let value;
+      if (param === null || param === undefined) {
+        value = 'NULL';
+      } else if (typeof param === 'string') {
+        value = `'${escapeString(param)}'`;
+      } else if (typeof param === 'number') {
+        value = param;
+      } else {
+        value = `'${escapeString(String(param))}'`;
+      }
+      query = query.replace('?', value);
+    });
+  }
   
   const result = db.exec(query);
   if (result.length === 0 || result[0].values.length === 0) return [];
