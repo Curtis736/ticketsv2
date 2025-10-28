@@ -9,14 +9,6 @@ const AdminDashboard = ({ user, onLogout }) => {
   const [filter, setFilter] = useState('all');
   const [updateData, setUpdateData] = useState({ status: '', adminNotes: '' });
 
-  useEffect(() => {
-    fetchTickets();
-    
-    // Auto-refresh every 30 seconds
-    const interval = setInterval(fetchTickets, 30000);
-    return () => clearInterval(interval);
-  }, [fetchTickets]);
-
   const fetchTickets = useCallback(async () => {
     try {
       const res = await axios.get('/admin/tickets');
@@ -28,7 +20,15 @@ const AdminDashboard = ({ user, onLogout }) => {
     }
   }, []);
 
-  const handleUpdate = async () => {
+  useEffect(() => {
+    fetchTickets();
+    
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(fetchTickets, 30000);
+    return () => clearInterval(interval);
+  }, [fetchTickets]);
+
+  const handleUpdate = useCallback(async () => {
     try {
       const ticketId = selectedTicket.id || selectedTicket._id;
       await axios.put(`/admin/tickets/${ticketId}`, {
@@ -43,7 +43,7 @@ const AdminDashboard = ({ user, onLogout }) => {
     } catch (err) {
       alert(err.response?.data?.message || 'Erreur lors de la mise à jour');
     }
-  };
+  }, [selectedTicket, updateData, fetchTickets]);
 
   const handleStatusChange = async (ticketId, newStatus) => {
     try {
