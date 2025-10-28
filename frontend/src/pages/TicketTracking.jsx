@@ -61,7 +61,13 @@ const TicketTracking = () => {
     <div className="tracking-container">
       <header className="tracking-header">
         <h1>📋 Suivi de ticket</h1>
-        <button onClick={() => navigate('/')} className="btn-home">
+        <button
+          onClick={() => {
+            // Ouvre le formulaire dans un nouvel onglet et garde cette page ouverte
+            window.open('/', '_blank');
+          }}
+          className="btn-home"
+        >
           🏠 Accueil
         </button>
       </header>
@@ -96,7 +102,13 @@ const TicketTracking = () => {
           )}
 
           <div className="ticket-actions">
-            <button onClick={() => navigate('/')} className="btn-new-ticket">
+            <button
+              onClick={() => {
+                // Ouvre le formulaire dans un nouvel onglet et garde la page de statut ouverte
+                window.open('/', '_blank');
+              }}
+              className="btn-new-ticket"
+            >
               Créer un nouveau ticket
             </button>
           </div>
