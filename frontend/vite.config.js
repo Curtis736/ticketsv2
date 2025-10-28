@@ -12,14 +12,8 @@ export default defineConfig({
     }
   },
   build: {
-    // Optimize build size
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-      },
-    },
+    // Optimize build size with esbuild (default, no additional dependency)
+    minify: 'esbuild',
     rollupOptions: {
       output: {
         manualChunks: {
