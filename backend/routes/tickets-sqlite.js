@@ -17,14 +17,27 @@ router.post('/', (req, res) => {
       created_by_name: req.body.createdByName || 'Utilisateur anonyme'
     });
 
-    // Send email notification
+    // Send email notification to admin
     sendEmailNotification({
       to: process.env.ADMIN_EMAIL || 'admin@example.com',
-      subject: 'Nouveau ticket créé',
-      text: `Un nouveau ticket a été créé par ${req.body.createdByName || 'Utilisateur anonyme'}: ${req.body.title}`
+      subject: 'Nouveau ticket créé - #' + ticket.id,
+      text: `Nouveau ticket créé\n\nDemandeur: ${req.body.createdByName || 'Utilisateur anonyme'}\nTitre: ${req.body.title}\nDescription: ${req.body.description}\nCatégorie: ${req.body.category}\nPriorité: ${req.body.priority}\nID: #${ticket.id || 'N/A'}\nDate: ${new Date().toLocaleString('fr-FR')}\n\nConnectez-vous à l'interface admin pour traiter ce ticket.`
     });
 
     res.status(201).json(ticket);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Get ticket by ID for tracking (public, no auth)
+router.get('/track/:id', (req, res) => {
+  try {
+    const ticket = Ticket.findById(req.params.id);
+    if (!ticket) {
+      return res.status(404).json({ message: 'Ticket non trouvé' });
+    }
+    res.json(ticket);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

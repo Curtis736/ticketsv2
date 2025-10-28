@@ -179,3 +179,4 @@ Si vous voulez `tickets.sedi-ati.com`:
 - Pour accès local uniquement, utilisez l'IP (192.168.1.100)
 
 
+

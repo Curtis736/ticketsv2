@@ -6,6 +6,7 @@ import axios from 'axios';
 const Login = lazy(() => import('./pages/Login'));
 const PublicTicketForm = lazy(() => import('./pages/PublicTicketForm'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const TicketTracking = lazy(() => import('./pages/TicketTracking'));
 
 axios.defaults.baseURL = '/api';
 
@@ -41,6 +42,7 @@ function App() {
       <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Chargement...</div>}>
         <Routes>
           <Route path="/" element={<PublicTicketForm />} />
+          <Route path="/track/:id" element={<TicketTracking />} />
           <Route path="/login" element={user ? <Navigate to="/admin" /> : <Login onLogin={login} />} />
           <Route path="/admin" element={user && user.role === 'admin' ? <AdminDashboard user={user} onLogout={logout} /> : <Navigate to="/login" />} />
         </Routes>

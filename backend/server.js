@@ -10,6 +10,9 @@ dotenv.config();
 
 const app = express();
 
+// Trust proxy for rate limiting behind nginx/proxy
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet({
   crossOriginEmbedderPolicy: false,
@@ -42,7 +45,14 @@ const authLimiter = rateLimit({
   message: 'Trop de tentatives de connexion, veuillez réessayer dans 15 minutes.'
 });
 app.use('/api/auth/login', authLimiter);
-app.use('/api/tickets', authLimiter); // Public ticket creation
+
+// More lenient rate limiting for public tickets
+const ticketLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 50, // allow more requests for ticket creation
+  message: 'Trop de demandes, veuillez patienter quelques minutes.'
+});
+app.use('/api/tickets', ticketLimiter);
 
 // Routes
 app.use('/api/auth', require('./routes/auth-sqlite'));

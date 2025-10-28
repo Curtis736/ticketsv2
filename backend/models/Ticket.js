@@ -22,14 +22,51 @@ const Ticket = {
   },
 
   create({ title, description, priority, category, created_by, created_by_name }) {
-    db.run(`
-      INSERT INTO tickets (title, description, priority, category, created_by, created_by_name)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `, [title, description, priority, category, created_by, created_by_name]);
+    console.log('Ticket.create called with:', { title, description, priority, category, created_by, created_by_name });
     
-    // Get last insert id
-    const result = db.get('SELECT last_insert_rowid() as id');
-    return this.findById(result.id);
+    try {
+      db.run(`
+        INSERT INTO tickets (title, description, priority, category, created_by, created_by_name)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `, [title, description, priority, category, created_by, created_by_name]);
+      
+      console.log('INSERT successful');
+      
+      // Get last insert id
+      const result = db.get('SELECT last_insert_rowid() as id');
+      console.log('Last insert ID:', result);
+      console.log('Result as ID:', result?.id);
+      
+      // Alternative: Query by order to get the last inserted ticket
+      const allTickets = db.all('SELECT * FROM tickets ORDER BY id DESC LIMIT 1');
+      console.log('Last ticket from query:', allTickets);
+      
+      if (allTickets && allTickets.length > 0) {
+        const ticket = allTickets[0];
+        console.log('Returning ticket:', ticket);
+        return ticket;
+      }
+      
+      // Fallback: construct ticket manually
+      const ticket = {
+        id: result?.id || null,
+        title,
+        description,
+        priority,
+        category,
+        created_by,
+        created_by_name,
+        status: 'Ouvert',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      console.log('Fallback ticket:', ticket);
+      return ticket;
+    } catch (err) {
+      console.error('Error in Ticket.create:', err);
+      throw err;
+    }
   },
 
   update(id, data) {

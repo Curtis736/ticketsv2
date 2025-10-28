@@ -20,6 +20,28 @@
   font-size: 1.8rem;
 }
 
+.header-buttons {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.my-tickets-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  padding: 0.75rem 1.5rem;
+  border-radius: 5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.my-tickets-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
 .admin-link {
   background: white;
   color: #667eea;
@@ -128,6 +150,22 @@
   border: 1px solid #f5c6cb;
 }
 
+.track-btn {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.track-btn:hover {
+  transform: translateY(-2px);
+  background: #45a049;
+}
+
 .submit-btn {
   width: 100%;
   padding: 1rem;
@@ -165,6 +203,16 @@
     gap: 1rem;
   }
 
+  .header-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .my-tickets-btn,
+  .admin-link {
+    width: 100%;
+  }
+
   .public-content {
     padding: 0 1rem;
   }
@@ -173,5 +221,6 @@
     grid-template-columns: 1fr;
   }
 }
+
 
 

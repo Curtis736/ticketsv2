@@ -1,0 +1,156 @@
+.tracking-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  flex-direction: column;
+}
+
+.tracking-header {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+}
+
+.tracking-header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+.btn-home {
+  background: white;
+  color: #667eea;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.btn-home:hover {
+  transform: translateY(-2px);
+}
+
+.tracking-content {
+  flex: 1;
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 0 2rem;
+  width: 100%;
+}
+
+.tracking-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.ticket-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.ticket-header h2 {
+  margin: 0;
+  color: #333;
+}
+
+.status-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  color: white;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.ticket-info {
+  margin-bottom: 1.5rem;
+}
+
+.ticket-info p {
+  margin: 0.5rem 0;
+  color: #555;
+}
+
+.ticket-description {
+  margin-bottom: 1.5rem;
+}
+
+.ticket-description h3,
+.admin-notes h3 {
+  color: #667eea;
+  margin-bottom: 0.5rem;
+}
+
+.ticket-description p {
+  color: #666;
+  line-height: 1.6;
+}
+
+.admin-notes {
+  background: #f5f5f5;
+  padding: 1rem;
+  border-radius: 5px;
+  border-left: 4px solid #667eea;
+  margin-bottom: 1.5rem;
+}
+
+.admin-notes p {
+  color: #555;
+  margin: 0;
+}
+
+.ticket-actions {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.btn-new-ticket {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 5px;
+  font-weight: 600;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-new-ticket:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+}
+
+.error {
+  color: #d32f2f;
+  text-align: center;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .tracking-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .tracking-content {
+    padding: 0 1rem;
+  }
+
+  .ticket-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+}
+

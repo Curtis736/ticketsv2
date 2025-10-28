@@ -13,7 +13,9 @@ const PublicTicketForm = () => {
   });
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
+  const [createdTicketId, setCreatedTicketId] = useState(null);
   const navigate = useNavigate();
+
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -25,9 +27,10 @@ const PublicTicketForm = () => {
     setMessage({ text: '', type: '' });
 
     try {
-      await axios.post('/tickets', formData);
+      const response = await axios.post('/tickets', formData);
+      setCreatedTicketId(response.data.id);
       setMessage({ 
-        text: '✅ Ticket créé avec succès! Nous vous contacterons bientôt.', 
+        text: `✅ Ticket créé avec succès! ID: #${response.data.id}`, 
         type: 'success' 
       });
       setFormData({
@@ -70,6 +73,17 @@ const PublicTicketForm = () => {
           {message.text && (
             <div className={`message ${message.type}`}>
               {message.text}
+              {createdTicketId && (
+                <div style={{ marginTop: '1rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/track/${createdTicketId}`)}
+                    className="track-btn"
+                  >
+                    📋 Suivre mon ticket
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -154,5 +168,6 @@ const PublicTicketForm = () => {
 };
 
 export default PublicTicketForm;
+
 
 
