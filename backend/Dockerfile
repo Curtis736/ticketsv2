@@ -2,11 +2,11 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy package.json
+COPY package.json ./
 
-# Install dependencies (with cache mount for faster builds)
-RUN npm ci --only=production && npm cache clean --force
+# Install dependencies
+RUN npm install --omit=dev --no-audit && npm cache clean --force
 
 # Copy application files
 COPY . .

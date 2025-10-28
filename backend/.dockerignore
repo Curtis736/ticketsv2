@@ -11,5 +11,6 @@ README.md
 coverage
 .vscode
 .idea
+package-lock.json
 
 
