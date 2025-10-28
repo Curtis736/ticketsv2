@@ -2,11 +2,11 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files first for better caching
-COPY package*.json ./
+# Copy package.json first for better caching
+COPY package.json ./
 
-# Install dependencies with cache mount
-RUN npm ci --prefer-offline --no-audit && npm cache clean --force
+# Install dependencies (package-lock.json not present)
+RUN npm install --no-audit --prefer-offline && npm cache clean --force
 
 # Copy application files
 COPY . .
