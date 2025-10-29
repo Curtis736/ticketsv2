@@ -77,7 +77,7 @@ const PublicTicketForm = () => {
                 <div style={{ marginTop: '1rem' }}>
                   <button
                     type="button"
-                    onClick={() => navigate(`/track/${createdTicketId}`)}
+                    onClick={() => window.open(`/track/${createdTicketId}`, '_blank')}
                     className="track-btn"
                   >
                     📋 Suivre mon ticket

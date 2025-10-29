@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import './TicketTracking.css';
@@ -10,20 +10,30 @@ const TicketTracking = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchTicket();
-  }, [id]);
-
-  const fetchTicket = async () => {
+  const fetchTicket = useCallback(async (silent = false) => {
     try {
       const res = await axios.get(`/tickets/track/${id}`);
       setTicket(res.data);
+      setError('');
     } catch (err) {
       setError('Ticket non trouvé');
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchTicket(false); // Premier chargement avec loading
+    
+    // Rafraîchir automatiquement toutes les 30 secondes pour voir les mises à jour
+    const interval = setInterval(() => {
+      fetchTicket(true); // Rafraîchissement silencieux sans afficher le loading
+    }, 30000); // 30 secondes
+    
+    return () => clearInterval(interval);
+  }, [fetchTicket]);
 
   const getStatusColor = (status) => {
     const colors = {
