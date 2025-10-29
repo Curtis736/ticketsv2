@@ -108,7 +108,7 @@ router.post('/', (req, res) => {
                             <table role="presentation" style="width: 100%; border-collapse: collapse;">
                                 <tr>
                                     <td align="center" style="padding: 20px 0;">
-                                        <a href="${process.env.FRONTEND_URL || 'http://localhost:3064'}/admin" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 15px; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);">
+                                        <a href="${process.env.FRONTEND_URL || 'https://sedi-tickets.sedi-ati.com'}/admin" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 15px; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);">
                                             🔧 Accéder au Tableau de Bord
                                         </a>
                                     </td>
