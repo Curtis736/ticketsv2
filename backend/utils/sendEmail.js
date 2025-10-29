@@ -4,7 +4,7 @@ const sgMail = require('@sendgrid/mail');
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || 'YOUR_SENDGRID_API_KEY';
 sgMail.setApiKey(SENDGRID_API_KEY);
 
-const sendEmailNotification = async ({ to, subject, text }) => {
+const sendEmailNotification = async ({ to, subject, text, html }) => {
   try {
     console.log('📧 Tentative d\'envoi d\'email:', { to, subject });
     
@@ -15,12 +15,17 @@ const sendEmailNotification = async ({ to, subject, text }) => {
 
     console.log('✅ Clé SendGrid détectée:', SENDGRID_API_KEY.substring(0, 10) + '...');
 
+    // Convert text to HTML if html not provided
+    const htmlContent = html || `<p>${(text || '').replace(/\n/g, '<br>')}</p>`;
+    // Convert HTML to plain text if text not provided
+    const textContent = text || html?.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ') || '';
+
     const msg = {
       to,
       from: process.env.SENDGRID_FROM_EMAIL || 'noreply@ticketsystem.com',
       subject,
-      text,
-      html: `<p>${text}</p>`
+      text: textContent,
+      html: htmlContent
     };
 
     console.log('📨 Envoi de l\'email à:', to);
