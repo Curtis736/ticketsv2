@@ -33,7 +33,7 @@ fi
 
 # Compter les tickets dans la sauvegarde
 if command -v sqlite3 &> /dev/null; then
-    TICKET_COUNT=$(sqlite3 "$BACKUP_FILE" "SELECT COUNT(*) FROMox tickets;" 2>/dev/null)
+    TICKET_COUNT=$(sqlite3 "$BACKUP_FILE" "SELECT COUNT(*) FROM tickets;" 2>/dev/null)
     echo "📊 Nombre de tickets sauvegardés : $TICKET_COUNT"
 fi
 
