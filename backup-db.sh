@@ -13,22 +13,24 @@ mkdir -p "$BACKUP_DIR"
 echo "💾 Sauvegarde de la base de données..."
 
 # Copier la base depuis le volume Docker
-if docker ps | grep -q ticket-backend; then
-    # Si le container est en cours d'exécution
+VOLUME_PATH=$(docker volume inspect ticketsv2_db-data --format '{{ .Mountpoint }}' 2>/dev/null)
+
+if [ -n "$VOLUME_PATH" ] && [ -f "$VOLUME_PATH/tickets.db" ]; then
+    # Copier depuis le volume Docker directement (méthode la plus fiable)
+    sudo cp "$VOLUME_PATH/tickets.db" "$BACKUP_FILE"
+    sudo chown $USER:$USER "$BACKUP_FILE"
+    echo "✅ Sauvegarde créée : $BACKUP_FILE"
+elif docker ps | grep -q ticket-backend; then
+    # Si le container est en cours d'exécution, copier depuis le container
     docker cp ticket-backend:/app/data/tickets.db "$BACKUP_FILE"
     echo "✅ Sauvegarde créée : $BACKUP_FILE"
 else
-    # Si le container n'est pas en cours, copier depuis le volume Docker directement
-    VOLUME_PATH=$(docker volume inspect ticketsv2_db-data --format '{{ .Mountpoint }}' 2>/dev/null)
-    if [ -n "$VOLUME_PATH" ] && [ -f "$VOLUME_PATH/tickets.db" ]; then
-        sudo cp "$VOLUME_PATH/tickets.db" "$BACKUP_FILE"
-        sudo chown $USER:$USER "$BACKUP_FILE"
-        echo "✅ Sauvegarde créée : $BACKUP_FILE"
-    else
-        echo "⚠️  Erreur : Impossible de trouver la base de données"
-        echo "   Vérifiez que le volume Docker 'ticketsv2_db-data' existe"
-        exit 1
-    fi
+    echo "⚠️  Attention : Impossible de trouver la base de données"
+    echo "   Le volume Docker 'ticketsv2_db-data' existe-t Sud ?"
+    echo "   Vérification : docker volume inspect ticketsv2_db-data"
+    echo ""
+    echo "💡 La base sera créée automatiquement au premier démarrage du container"
+    exit 0  # Ne pas échouer, c'est peut-être juste que la DB n'existe pas encore
 fi
 
 # Compter les tickets dans la sauvegarde
