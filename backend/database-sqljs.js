@@ -101,19 +101,32 @@ async function init() {
 
 // Save database to file
 function saveDatabase() {
-  if (!db) return;
+  if (!db) {
+    console.warn('⚠️ Cannot save database: db not initialized');
+    return;
+  }
   
   try {
     const dataDir = path.join(__dirname, 'data');
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
+      console.log('📁 Created data directory:', dataDir);
     }
     const dbPath = path.join(dataDir, 'tickets.db');
     const data = db.export();
     const buffer = Buffer.from(data);
-    fs.writeFileSync(dbPath, buffer);
+    
+    // Write to temporary file first, then rename (atomic operation)
+    const tempPath = dbPath + '.tmp';
+    fs.writeFileSync(tempPath, buffer, { flag: 'w' });
+    fs.renameSync(tempPath, dbPath);
+    
+    // Verify file was written
+    const stats = fs.statSync(dbPath);
+    console.log(`💾 Database saved: ${dbPath} (${stats.size} bytes)`);
   } catch (err) {
-    console.error('Error saving database:', err);
+    console.error('❌ Error saving database:', err);
+    throw err; // Re-throw to alert caller
   }
 }
 

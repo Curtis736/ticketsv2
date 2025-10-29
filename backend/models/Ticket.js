@@ -25,12 +25,18 @@ const Ticket = {
     console.log('Ticket.create called with:', { title, description, priority, category, created_by, created_by_name });
     
     try {
+      // Insert ticket
       db.run(`
         INSERT INTO tickets (title, description, priority, category, created_by, created_by_name)
         VALUES (?, ?, ?, ?, ?, ?)
       `, [title, description, priority, category, created_by, created_by_name]);
       
       console.log('INSERT successful');
+      
+      // Force save to disk immediately
+      const { saveDatabase } = require('../database-sqljs');
+      saveDatabase();
+      console.log('✅ Database saved to disk');
       
       // Get last insert id
       const result = db.get('SELECT last_insert_rowid() as id');
@@ -44,6 +50,15 @@ const Ticket = {
       if (allTickets && allTickets.length > 0) {
         const ticket = allTickets[0];
         console.log('Returning ticket:', ticket);
+        
+        // Verify ticket exists in DB by querying again
+        const verifyTicket = db.get('SELECT * FROM tickets WHERE id = ?', [ticket.id]);
+        if (verifyTicket) {
+          console.log('✅ Ticket verified in database, ID:', ticket.id);
+        } else {
+          console.error('⚠️ WARNING: Ticket not found after insertion!');
+        }
+        
         return ticket;
       }
       
