@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './PublicTicketForm.css';
@@ -9,19 +9,36 @@ const PublicTicketForm = () => {
     description: '',
     category: 'Général',
     priority: 'Moyenne',
-    createdByName: ''
+    createdByName: '',
+    email: ''
   });
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
   const [createdTicketId, setCreatedTicketId] = useState(null);
   const [trackingInfo, setTrackingInfo] = useState(null);
   const [files, setFiles] = useState([]);
+  const [recentTickets, setRecentTickets] = useState([]);
   const navigate = useNavigate();
 
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
+  // Charger les derniers tickets suivables depuis le navigateur
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('recentTickets');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          setRecentTickets(parsed);
+        }
+      }
+    } catch (e) {
+      // ignore JSON errors
+    }
+  }, []);
 
   const handleFileChange = (e) => {
     setFiles(Array.from(e.target.files || []));
@@ -40,6 +57,9 @@ const PublicTicketForm = () => {
       data.append('category', formData.category);
       data.append('priority', formData.priority);
       data.append('createdByName', formData.createdByName);
+      if (formData.email) {
+        data.append('email', formData.email);
+      }
       files.forEach((file) => {
         data.append('attachments', file);
       });
@@ -54,6 +74,21 @@ const PublicTicketForm = () => {
         link: response.data.trackingLink,
         token: response.data.tracking_token
       });
+
+      // Sauvegarder ce ticket dans l'historique local du navigateur
+      const newTicket = {
+        id: response.data.id,
+        link: response.data.trackingLink,
+        title: formData.title,
+        createdAt: new Date().toISOString()
+      };
+      const updatedRecent = [newTicket, ...recentTickets].slice(0, 5);
+      setRecentTickets(updatedRecent);
+      try {
+        localStorage.setItem('recentTickets', JSON.stringify(updatedRecent));
+      } catch (e) {
+        // stockage local non critique
+      }
       setMessage({ 
         text: `✅ Ticket créé avec succès! ID: #${response.data.id}`, 
         type: 'success' 
@@ -63,7 +98,8 @@ const PublicTicketForm = () => {
         description: '',
         category: 'Général',
         priority: 'Moyenne',
-        createdByName: ''
+        createdByName: '',
+        email: ''
       });
       setFiles([]);
     } catch (err) {
@@ -96,6 +132,28 @@ const PublicTicketForm = () => {
           <p>Remplissez le formulaire ci-dessous pour créer un ticket de demande. Notre équipe vous répondra rapidement.</p>
         </div>
 
+        {recentTickets.length > 0 && (
+          <div className="info-box recent-tickets-box">
+            <h3>📋 Suivre vos dernières demandes</h3>
+            <p className="recent-tickets-subtitle">
+              Ces liens sont enregistrés uniquement dans ce navigateur.
+            </p>
+            <div className="recent-tickets-list">
+              {recentTickets.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  className="recent-ticket-pill"
+                  onClick={() => window.open(t.link, '_blank')}
+                >
+                  <span className="recent-ticket-id">Ticket #{t.id}</span>
+                  {t.title && <span className="recent-ticket-title">{t.title}</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="public-ticket-form">
           {message.text && (
             <div className={`message ${message.type}`}>
@@ -126,6 +184,17 @@ const PublicTicketForm = () => {
               onChange={handleChange}
               placeholder="Entrez votre nom"
               required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Votre email (pour recevoir une copie, optionnel)</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="vous@exemple.com"
             />
           </div>
 

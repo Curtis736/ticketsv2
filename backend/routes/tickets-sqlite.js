@@ -263,6 +263,7 @@ router.post('/', upload.array('attachments', 5), (req, res) => {
     const textEmail = `Nouveau ticket créé
 
 Demandeur: ${ticketData.createdByName}
+Email demandeur: ${req.body.email || 'Non renseigné'}
 Titre: ${ticketData.title}
 Description: ${ticketData.description}
 Catégorie: ${ticketData.category}
@@ -279,7 +280,9 @@ Connectez-vous à l'interface admin pour traiter ce ticket.`;
       subject: `🎫 Nouveau ticket #${ticket.id || 'N/A'} - ${req.body.title}`,
       text: textEmail,
       html: htmlEmail,
-      cc: undefined // CC géré via TICKET_CC_EMAILS
+      // On met en copie l'email du demandeur (s'il est renseigné),
+      // en plus des éventuelles adresses définies par TICKET_CC_EMAILS
+      cc: req.body.email || undefined
     });
 
     res.status(201).json({
@@ -295,16 +298,29 @@ Connectez-vous à l'interface admin pour traiter ce ticket.`;
 router.get('/track/:id', (req, res) => {
   try {
     const { token } = req.query;
-    if (!token) {
+    const rawToken = Array.isArray(token) ? token[0] : token;
+    const normalizedToken = String(rawToken || '').trim();
+
+    if (!normalizedToken) {
       return res.status(400).json({ message: 'Token de suivi requis' });
     }
+
     const ticket = Ticket.findById(req.params.id);
     if (!ticket) {
       return res.status(404).json({ message: 'Ticket non trouvé' });
     }
-    if (!ticket.tracking_token || ticket.tracking_token !== token) {
+
+    const storedToken = String(ticket.tracking_token || '').trim();
+
+    if (!storedToken || storedToken !== normalizedToken) {
+      console.warn('Tracking token mismatch', {
+        ticketId: ticket.id,
+        storedTokenStart: storedToken.substring(0, 8),
+        receivedTokenStart: normalizedToken.substring(0, 8)
+      });
       return res.status(403).json({ message: 'Token invalide' });
     }
+
     if (ticket.tracking_token_expires && new Date(ticket.tracking_token_expires) < new Date()) {
       return res.status(403).json({ message: 'Token expiré, veuillez demander un nouveau lien' });
     }

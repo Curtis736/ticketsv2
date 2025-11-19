@@ -84,6 +84,58 @@
   margin: 0;
 }
 
+/* Recent tickets styling */
+.recent-tickets-box {
+  text-align: left;
+}
+
+.recent-tickets-box h3 {
+  margin-top: 0;
+  margin-bottom: 0.25rem;
+}
+
+.recent-tickets-subtitle {
+  font-size: 0.9rem;
+  color: #888;
+  margin-bottom: 0.75rem;
+}
+
+.recent-tickets-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.recent-ticket-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  border: 1px solid #e0e0e0;
+  padding: 0.4rem 0.9rem;
+  background: #f7f7ff;
+  color: #333;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+}
+
+.recent-ticket-pill:hover {
+  background: #e0e7ff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.recent-ticket-id {
+  font-weight: 700;
+  color: #555;
+}
+
+.recent-ticket-title {
+  font-weight: 500;
+  color: #666;
+}
+
 .public-ticket-form {
   background: white;
   padding: 2rem;
