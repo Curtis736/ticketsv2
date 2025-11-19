@@ -1,0 +1,76 @@
+name: CI/CD - Tickets
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: ci-cd-tickets-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: Build & checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Install backend deps
+        working-directory: backend
+        run: npm ci
+
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci
+
+      # Ajoute ici des commandes de tests si/ quand elles existent
+      # - name: Run backend tests
+      #   working-directory: backend
+      #   run: npm test
+      #
+      # - name: Run frontend tests
+      #   working-directory: frontend
+      #   run: npm test
+
+      - name: Build frontend (assure que le build passe)
+        working-directory: frontend
+        run: npm run build
+
+  deploy:
+    name: Deploy to serveurtickets server
+    needs: ci
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+
+    steps:
+      - name: Checkout code (for reference only)
+        uses: actions/checkout@v4
+
+      - name: Deploy over SSH (git pull + docker compose up)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT || '22' }}
+          script: |
+            set -e
+            cd ~/ticketsv2
+            echo "Pulling latest code..."
+            git pull
+            echo "Rebuilding and restarting containers..."
+            docker compose down
+            docker compose up -d --build
+            echo "Deployment finished."
+
+
