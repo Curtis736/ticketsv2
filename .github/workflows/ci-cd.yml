@@ -48,28 +48,19 @@ jobs:
   deploy:
     name: Deploy to serveurtickets server
     needs: ci
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     if: github.ref == 'refs/heads/master'
 
     steps:
-      - name: Checkout code (for reference only)
-        uses: actions/checkout@v4
-
-      - name: Deploy over SSH (git pull + docker compose up)
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          port: ${{ secrets.SSH_PORT || '22' }}
-          script: |
-            set -e
-            cd ~/ticketsv2
-            echo "Pulling latest code..."
-            git pull
-            echo "Rebuilding and restarting containers..."
-            docker compose down
-            docker compose up -d --build
-            echo "Deployment finished."
+      - name: Deploy locally on serveurtickets
+        run: |
+          set -e
+          cd ~/ticketsv2
+          echo "Pulling latest code..."
+          git pull
+          echo "Rebuilding and restarting containers..."
+          docker compose down
+          docker compose up -d --build
+          echo "Deployment finished."
 
 
