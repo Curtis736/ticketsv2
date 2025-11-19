@@ -4,7 +4,7 @@ const sgMail = require('@sendgrid/mail');
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || 'YOUR_SENDGRID_API_KEY';
 sgMail.setApiKey(SENDGRID_API_KEY);
 
-const sendEmailNotification = async ({ to, subject, text, html }) => {
+const sendEmailNotification = async ({ to, subject, text, html, cc }) => {
   try {
     console.log('📧 Tentative d\'envoi d\'email:', { to, subject });
     
@@ -27,6 +27,19 @@ const sendEmailNotification = async ({ to, subject, text, html }) => {
       text: textContent,
       html: htmlContent
     };
+
+    const ccEnv = process.env.TICKET_CC_EMAILS || '';
+    const ccListFromEnv = ccEnv
+      .split(',')
+      .map((e) => e.trim())
+      .filter((e) => e.length > 0);
+
+    const ccList = Array.isArray(cc) ? cc : cc ? [cc] : [];
+    const finalCc = [...new Set([...ccListFromEnv, ...ccList])];
+
+    if (finalCc.length > 0) {
+      msg.cc = finalCc;
+    }
 
     console.log('📨 Envoi de l\'email à:', to);
     await sgMail.send(msg);

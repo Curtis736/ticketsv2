@@ -12,6 +12,7 @@ services:
       - SENDGRID_API_KEY=${SENDGRID_API_KEY}
       - SENDGRID_FROM_EMAIL=${SENDGRID_FROM_EMAIL}
       - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - FRONTEND_URL=${FRONTEND_URL:-http://serveurtickets.sedi.local}
     volumes:
       - db-data:/app/data
     restart: unless-stopped

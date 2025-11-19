@@ -1,4 +1,5 @@
 const db = require('../database-sqljs');
+const crypto = require('crypto');
 
 const Ticket = {
   findAll() {
@@ -21,15 +22,42 @@ const Ticket = {
     return db.all('SELECT * FROM tickets WHERE created_by = ? ORDER BY created_at DESC', [userId]);
   },
 
+  getFiles(ticketId) {
+    return db.all('SELECT * FROM ticket_files WHERE ticket_id = ? ORDER BY created_at ASC', [ticketId]);
+  },
+
+  addFiles(ticketId, files = [], uploadedBy = 'system') {
+    if (!files || files.length === 0) return;
+    files.forEach(file => {
+      db.run(
+        `
+        INSERT INTO ticket_files (ticket_id, filename, original_name, mime_type, size, uploaded_by)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `,
+        [
+          ticketId,
+          file.filename,
+          file.originalname,
+          file.mimetype || '',
+          file.size || 0,
+          uploadedBy || 'system'
+        ]
+      );
+    });
+  },
+
   create({ title, description, priority, category, created_by, created_by_name }) {
     console.log('Ticket.create called with:', { title, description, priority, category, created_by, created_by_name });
     
     try {
+      const trackingToken = crypto.randomBytes(32).toString('hex');
+      const trackingExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 jours
+      
       // Insert ticket
       db.run(`
-        INSERT INTO tickets (title, description, priority, category, created_by, created_by_name)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `, [title, description, priority, category, created_by, created_by_name]);
+        INSERT INTO tickets (title, description, priority, category, created_by, created_by_name, tracking_token, tracking_token_expires)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `, [title, description, priority, category, created_by, created_by_name, trackingToken, trackingExpires]);
       
       console.log('INSERT successful');
       
@@ -71,6 +99,8 @@ const Ticket = {
         category,
         created_by,
         created_by_name,
+        tracking_token: trackingToken,
+        tracking_token_expires: trackingExpires,
         status: 'Ouvert',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -123,6 +153,16 @@ const Ticket = {
     if (data.description !== undefined && data.description !== null) {
       setStatements.push('description = ?');
       values.push(data.description);
+    }
+
+    // Handle cancellation metadata
+    if (data.canceled_at !== undefined && data.canceled_at !== null) {
+      setStatements.push('canceled_at = ?');
+      values.push(data.canceled_at);
+    }
+    if (data.canceled_reason !== undefined && data.canceled_reason !== null) {
+      setStatements.push('canceled_reason = ?');
+      values.push(data.canceled_reason);
     }
     
     if (setStatements.length === 0) return this.findById(id);

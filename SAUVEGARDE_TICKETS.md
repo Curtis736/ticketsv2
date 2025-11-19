@@ -135,3 +135,16 @@ AVANT git pull/rebuild :
 
 **La base de données ne sera JAMAIS supprimée par git pull, mais il vaut mieux sauvegarder par précaution !** 🛡️
 
+
+
+
+
+
+
+
+
+
+
+
+
+

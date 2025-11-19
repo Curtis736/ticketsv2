@@ -63,3 +63,16 @@ docker-compose logs frontend --tail=50
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+

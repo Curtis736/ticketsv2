@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 const helmet = require('helmet');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
+const path = require('path');
 require('./database-sqljs'); // Initialize database
 
 dotenv.config();
@@ -54,6 +55,9 @@ const ticketLimiter = rateLimit({
 });
 app.use('/api/tickets', ticketLimiter);
 
+// Static files for uploads (attachments)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Routes
 app.use('/api/auth', require('./routes/auth-sqlite'));
 app.use('/api/tickets', require('./routes/tickets-sqlite'));
@@ -66,7 +70,9 @@ app.get('/api/health', (req, res) => {
 
 // SQLite (sql.js) database will be ready after a brief moment
 
-const PORT = process.env.PORT || 5050;
+// Utiliser un port dédié pour le backend afin d'éviter les conflits
+// avec une éventuelle variable d'environnement PORT globale (par ex. outils Windows)
+const PORT = process.env.BACKEND_PORT || 5050;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📊 Database: tickets.db`);

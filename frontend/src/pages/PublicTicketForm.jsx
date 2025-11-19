@@ -14,6 +14,8 @@ const PublicTicketForm = () => {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
   const [createdTicketId, setCreatedTicketId] = useState(null);
+  const [trackingInfo, setTrackingInfo] = useState(null);
+  const [files, setFiles] = useState([]);
   const navigate = useNavigate();
 
 
@@ -21,14 +23,37 @@ const PublicTicketForm = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleFileChange = (e) => {
+    setFiles(Array.from(e.target.files || []));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     setMessage({ text: '', type: '' });
+    setTrackingInfo(null);
 
     try {
-      const response = await axios.post('/tickets', formData);
+      const data = new FormData();
+      data.append('title', formData.title);
+      data.append('description', formData.description);
+      data.append('category', formData.category);
+      data.append('priority', formData.priority);
+      data.append('createdByName', formData.createdByName);
+      files.forEach((file) => {
+        data.append('attachments', file);
+      });
+
+      const response = await axios.post('/tickets', data, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
       setCreatedTicketId(response.data.id);
+      setTrackingInfo({
+        link: response.data.trackingLink,
+        token: response.data.tracking_token
+      });
       setMessage({ 
         text: `✅ Ticket créé avec succès! ID: #${response.data.id}`, 
         type: 'success' 
@@ -40,11 +65,13 @@ const PublicTicketForm = () => {
         priority: 'Moyenne',
         createdByName: ''
       });
+      setFiles([]);
     } catch (err) {
       setMessage({ 
         text: err.response?.data?.message || 'Erreur lors de la création du ticket', 
         type: 'error' 
       });
+      setTrackingInfo(null);
     } finally {
       setSubmitting(false);
     }
@@ -73,15 +100,18 @@ const PublicTicketForm = () => {
           {message.text && (
             <div className={`message ${message.type}`}>
               {message.text}
-              {createdTicketId && (
+              {trackingInfo?.link && (
                 <div style={{ marginTop: '1rem' }}>
                   <button
                     type="button"
-                    onClick={() => window.open(`/track/${createdTicketId}`, '_blank')}
+                    onClick={() => window.open(trackingInfo.link, '_blank')}
                     className="track-btn"
                   >
                     📋 Suivre mon ticket
                   </button>
+                  <p style={{ marginTop: '0.5rem', fontSize: '0.9rem' }}>
+                    Vous pouvez enregistrer ce lien sécurisé pour suivre l'avancement de votre demande.
+                  </p>
                 </div>
               )}
             </div>
@@ -152,6 +182,21 @@ const PublicTicketForm = () => {
               placeholder="Décrivez votre demande en détail..."
               required
             />
+          </div>
+
+          <div className="form-group">
+            <label>Pièces jointes (optionnel)</label>
+            <input
+              type="file"
+              multiple
+              onChange={handleFileChange}
+              accept=".png,.jpg,.jpeg,.pdf,.doc,.docx,.xlsx"
+            />
+            {files.length > 0 && (
+              <p style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>
+                {files.length} fichier(s) sélectionné(s)
+              </p>
+            )}
           </div>
 
           <button type="submit" disabled={submitting} className="submit-btn">

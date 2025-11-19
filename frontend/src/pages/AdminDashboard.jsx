@@ -8,6 +8,8 @@ const AdminDashboard = ({ user, onLogout }) => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [updateData, setUpdateData] = useState({ status: '', adminNotes: '' });
+  const [attachments, setAttachments] = useState([]);
+  const [uploading, setUploading] = useState(false);
 
   const fetchTickets = useCallback(async () => {
     try {
@@ -17,6 +19,16 @@ const AdminDashboard = ({ user, onLogout }) => {
       console.error('Error fetching tickets:', err);
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  const fetchAttachments = useCallback(async (ticketId) => {
+    try {
+      const res = await axios.get(`/admin/tickets/${ticketId}/attachments`);
+      setAttachments(res.data.attachments || []);
+    } catch (err) {
+      console.error('Error fetching attachments:', err);
+      setAttachments([]);
     }
   }, []);
 
@@ -100,7 +112,29 @@ const AdminDashboard = ({ user, onLogout }) => {
           <h1>Administration</h1>
           <p>Admin: {user.name}</p>
         </div>
-        <button onClick={onLogout} className="logout-btn">Déconnexion</button>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <button 
+            onClick={() => {
+              // Use relative URL to work with the API proxy
+              const previewUrl = '/api/tickets/preview-email';
+              window.open(previewUrl, '_blank', 'width=800,height=900,scrollbars=yes');
+            }}
+            className="preview-btn"
+            style={{
+              padding: '0.5rem 1rem',
+              background: '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: '5px',
+              cursor: 'pointer',
+              fontWeight: '600',
+              fontSize: '0.9rem'
+            }}
+          >
+            📧 Prévisualiser l'email
+          </button>
+          <button onClick={onLogout} className="logout-btn">Déconnexion</button>
+        </div>
       </header>
 
       <div className="dashboard-content">
@@ -146,7 +180,10 @@ const AdminDashboard = ({ user, onLogout }) => {
                   <div 
                     key={ticketId} 
                     className="ticket-card admin-card"
-                    onClick={() => setSelectedTicket(ticket)}
+                    onClick={() => {
+                      setSelectedTicket(ticket);
+                      fetchAttachments(ticketId);
+                    }}
                   >
                     <div className="ticket-header">
                       <h3>{ticket.title}</h3>
@@ -220,6 +257,47 @@ const AdminDashboard = ({ user, onLogout }) => {
                 rows="4"
                 placeholder="Ajouter des notes ou commentaires..."
               />
+            </div>
+            <div className="form-group">
+              <label>Pièces jointes</label>
+              <input
+                type="file"
+                multiple
+                onChange={async (e) => {
+                  const files = Array.from(e.target.files || []);
+                  if (files.length === 0) return;
+                  const ticketId = selectedTicket.id || selectedTicket._id;
+                  const data = new FormData();
+                  files.forEach((file) => data.append('attachments', file));
+                  setUploading(true);
+                  try {
+                    const res = await axios.post(`/admin/tickets/${ticketId}/attachments`, data, {
+                      headers: { 'Content-Type': 'multipart/form-data' }
+                    });
+                    setAttachments(res.data.attachments || []);
+                  } catch (err) {
+                    alert(err.response?.data?.message || 'Erreur lors de l\'upload des pièces jointes');
+                  } finally {
+                    setUploading(false);
+                    e.target.value = '';
+                  }
+                }}
+              />
+              {uploading && <p>Upload en cours...</p>}
+              {attachments.length > 0 && (
+                <ul style={{ marginTop: '0.5rem' }}>
+                  {attachments.map((file) => (
+                    <li key={file.id}>
+                      <a href={file.url} target="_blank" rel="noreferrer">
+                        {file.original_name}
+                      </a>{' '}
+                      <span style={{ fontSize: '0.8rem', color: '#666' }}>
+                        ({file.uploaded_by})
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
             <div className="modal-actions">
               <button onClick={handleUpdate} className="btn-primary">Sauvegarder</button>

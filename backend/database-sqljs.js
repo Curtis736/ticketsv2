@@ -75,8 +75,23 @@ async function init() {
         created_by_name TEXT NOT NULL,
         admin_notes TEXT DEFAULT '',
         assigned_to TEXT DEFAULT '',
+        tracking_token TEXT,
+        tracking_token_expires DATETIME,
+        canceled_at DATETIME,
+        canceled_reason TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS ticket_files (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ticket_id INTEGER NOT NULL,
+        filename TEXT NOT NULL,
+        original_name TEXT NOT NULL,
+        mime_type TEXT,
+        size INTEGER,
+        uploaded_by TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
 
       -- Create indexes for better query performance
@@ -84,6 +99,7 @@ async function init() {
       CREATE INDEX IF NOT EXISTS idx_tickets_created_by ON tickets(created_by);
       CREATE INDEX IF NOT EXISTS idx_tickets_created_at ON tickets(created_at);
       CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+      CREATE INDEX IF NOT EXISTS idx_ticket_files_ticket_id ON ticket_files(ticket_id);
     `);
     
     // Create default admin user
@@ -96,7 +112,45 @@ async function init() {
     saveDatabase();
   }
   
+  ensureTrackingColumns();
   console.log('✅ SQLite (sql.js) database loaded');
+}
+
+function ensureTrackingColumns() {
+  try {
+    const info = db.exec(`PRAGMA table_info('tickets')`);
+    const columns = info?.[0]?.values?.map(row => row[1]) || [];
+    if (!columns.includes('tracking_token')) {
+      db.run(`ALTER TABLE tickets ADD COLUMN tracking_token TEXT`);
+    }
+    if (!columns.includes('tracking_token_expires')) {
+      db.run(`ALTER TABLE tickets ADD COLUMN tracking_token_expires DATETIME`);
+    }
+    if (!columns.includes('canceled_at')) {
+      db.run(`ALTER TABLE tickets ADD COLUMN canceled_at DATETIME`);
+    }
+    if (!columns.includes('canceled_reason')) {
+      db.run(`ALTER TABLE tickets ADD COLUMN canceled_reason TEXT`);
+    }
+
+    // Ensure ticket_files table exists even for older databases
+    db.run(`
+      CREATE TABLE IF NOT EXISTS ticket_files (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ticket_id INTEGER NOT NULL,
+        filename TEXT NOT NULL,
+        original_name TEXT NOT NULL,
+        mime_type TEXT,
+        size INTEGER,
+        uploaded_by TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_ticket_files_ticket_id ON ticket_files(ticket_id);
+    `);
+  } catch (err) {
+    console.error('Error ensuring tracking columns:', err);
+  }
 }
 
 // Save database to file
@@ -130,103 +184,64 @@ function saveDatabase() {
   }
 }
 
-// Escape strings to prevent SQL injection
-function escapeString(str) {
-  if (typeof str !== 'string') return str;
-  return str.replace(/'/g, "''");
-}
-
 // Run query with params
 function run(sql, params = []) {
   if (!db) return;
-  
-  if (params.length > 0) {
-    // Replace ? with actual values (properly escaped)
-    let query = sql;
-    params.forEach((param) => {
-      let value;
-      if (param === null || param === undefined) {
-        value = 'NULL';
-      } else if (typeof param === 'string') {
-        value = `'${escapeString(param)}'`;
-      } else if (typeof param === 'number') {
-        value = param;
-      } else {
-        value = `'${escapeString(String(param))}'`;
-      }
-      query = query.replace('?', value);
-    });
-    db.run(query);
-  } else {
-    db.run(sql);
+
+  const stmt = db.prepare(sql);
+  try {
+    if (params.length > 0) {
+      stmt.run(params);
+    } else {
+      stmt.run();
+    }
+  } finally {
+    stmt.free();
   }
+
   saveDatabase();
 }
 
 // Get helper
 function get(sql, params = []) {
   if (!db) return null;
-  
-  let query = sql;
-  if (params.length > 0) {
-    params.forEach((param) => {
-      let value;
-      if (param === null || param === undefined) {
-        value = 'NULL';
-      } else if (typeof param === 'string') {
-        value = `'${escapeString(param)}'`;
-      } else if (typeof param === 'number') {
-        value = param;
-      } else {
-        value = `'${escapeString(String(param))}'`;
-      }
-      query = query.replace('?', value);
-    });
+
+  const stmt = db.prepare(sql);
+  try {
+    if (params.length > 0) {
+      stmt.bind(params);
+    }
+
+    if (!stmt.step()) {
+      return null;
+    }
+
+    return stmt.getAsObject();
+  } finally {
+    stmt.free();
   }
-  
-  const result = db.exec(query);
-  if (result.length > 0 && result[0].values.length > 0) {
-    const row = result[0].values[0];
-    const obj = {};
-    result[0].columns.forEach((col, idx) => {
-      obj[col] = row[idx];
-    });
-    return obj;
-  }
-  return null;
 }
 
 // All helper
 function all(sql, params = []) {
   if (!db) return [];
-  
-  let query = sql;
-  if (params.length > 0) {
-    params.forEach((param) => {
-      let value;
-      if (param === null || param === undefined) {
-        value = 'NULL';
-      } else if (typeof param === 'string') {
-        value = `'${escapeString(param)}'`;
-      } else if (typeof param === 'number') {
-        value = param;
-      } else {
-        value = `'${escapeString(String(param))}'`;
-      }
-      query = query.replace('?', value);
-    });
+
+  const stmt = db.prepare(sql);
+  const results = [];
+
+  try {
+    if (params.length > 0) {
+      stmt.bind(params);
+    }
+
+    while (stmt.step()) {
+      results.push(stmt.getAsObject());
+    }
+  } finally {
+    stmt.free();
   }
-  
-  const result = db.exec(query);
-  if (result.length === 0 || result[0].values.length === 0) return [];
-  
-  return result[0].values.map(row => {
-    const obj = {};
-    result[0].columns.forEach((col, idx) => {
-      obj[col] = row[idx];
-    });
-    return obj;
-  });
+
+  return results;
 }
 
 // Initialize
