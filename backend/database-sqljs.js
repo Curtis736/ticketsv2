@@ -244,7 +244,10 @@ function all(sql, params = []) {
   return results;
 }
 
-// Initialize
-init().catch(err => console.error('Database init error:', err));
+// Initialize once and expose readiness promise
+const ready = init().catch(err => {
+  console.error('Database init error:', err);
+  throw err;
+});
 
-module.exports = { run, get, all, saveDatabase };
+module.exports = { run, get, all, saveDatabase, ready };
