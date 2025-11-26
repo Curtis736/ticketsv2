@@ -106,7 +106,7 @@ const AdminDashboard = ({ user, onLogout }) => {
     return filter === 'all'
       ? tickets
       : tickets.filter((t) => t.status === filter);
-  }, [tickets, filter, resolvedSince]);
+  }, [tickets, filter]);
 
   // Memoize status counts (compteurs par onglet)
   const statusCounts = useMemo(() => {
