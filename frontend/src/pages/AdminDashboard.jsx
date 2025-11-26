@@ -2,13 +2,6 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import './Dashboard.css';
 
-// Date par défaut : premier jour du mois courant (pour le suivi des résolus)
-const getDefaultResolvedSince = () => {
-  const now = new Date();
-  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  return firstDayOfMonth.toISOString().slice(0, 10); // format YYYY-MM-DD pour l’input date
-};
-
 const AdminDashboard = ({ user, onLogout }) => {
   const [tickets, setTickets] = useState([]);
   const [selectedTicket, setSelectedTicket] = useState(null);
@@ -17,7 +10,6 @@ const AdminDashboard = ({ user, onLogout }) => {
   const [updateData, setUpdateData] = useState({ status: '', adminNotes: '' });
   const [attachments, setAttachments] = useState([]);
   const [uploading, setUploading] = useState(false);
-  const [resolvedSince, setResolvedSince] = useState(getDefaultResolvedSince);
 
   const fetchTickets = useCallback(async () => {
     try {
@@ -98,24 +90,16 @@ const AdminDashboard = ({ user, onLogout }) => {
     return colors[status] || '#999';
   };
 
-  // Memoize filtered tickets to avoid unnecessary recalculation
+  // Memoize filtered tickets pour chaque onglet
   const filteredTickets = useMemo(() => {
-    // Pour "Résolus", on veut un vrai suivi des tickets terminés depuis une certaine date
+    // Onglet "Résolus" = tous les tickets terminés (ni "Ouvert" ni "En cours"), sans filtre de date
     if (filter === 'Résolu') {
-      const sinceDate = resolvedSince ? new Date(resolvedSince) : null;
-      const resolvedStatuses = ['Résolu', 'Fermé'];
-
       return tickets.filter((t) => {
-        if (!resolvedStatuses.includes(t.status)) {
+        // On considère "terminé" tout ticket qui n'est ni "Ouvert" ni "En cours"
+        if (!t.status || t.status === 'Ouvert' || t.status === 'En cours') {
           return false;
         }
-        if (!sinceDate) return true;
-
-        const updatedAt = t.updated_at || t.updatedAt || t.created_at || t.createdAt;
-        if (!updatedAt) return true;
-
-        const ticketDate = new Date(updatedAt);
-        return ticketDate >= sinceDate;
+        return true;
       });
     }
 
@@ -124,25 +108,19 @@ const AdminDashboard = ({ user, onLogout }) => {
       : tickets.filter((t) => t.status === filter);
   }, [tickets, filter, resolvedSince]);
 
-  // Memoize status counts (en cohérence avec le filtre "Résolus" + date)
+  // Memoize status counts (compteurs par onglet)
   const statusCounts = useMemo(() => {
-    const sinceDate = resolvedSince ? new Date(resolvedSince) : null;
-    const resolvedStatuses = ['Résolu', 'Fermé'];
-
     return {
       all: tickets.length,
       Ouvert: tickets.filter((t) => t.status === 'Ouvert').length,
       'En cours': tickets.filter((t) => t.status === 'En cours').length,
       Résolu: tickets.filter((t) => {
-        if (!resolvedStatuses.includes(t.status)) return false;
-        if (!sinceDate) return true;
-        const updatedAt = t.updated_at || t.updatedAt || t.created_at || t.createdAt;
-        if (!updatedAt) return true;
-        const ticketDate = new Date(updatedAt);
-        return ticketDate >= sinceDate;
+        // Même logique que filteredTickets pour l'onglet "Résolus"
+        if (!t.status || t.status === 'Ouvert' || t.status === 'En cours') return false;
+        return true;
       }).length,
     };
-  }, [tickets, resolvedSince]);
+  }, [tickets]);
 
   return (
     <div className="dashboard">
@@ -203,20 +181,6 @@ const AdminDashboard = ({ user, onLogout }) => {
             Résolus ({statusCounts.Résolu})
           </button>
         </div>
-
-        {filter === 'Résolu' && (
-          <div className="resolved-filter" style={{ margin: '0.5rem 0 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <label style={{ fontWeight: 500 }}>
-              Tickets terminés depuis le :
-            </label>
-            <input
-              type="date"
-              value={resolvedSince}
-              onChange={(e) => setResolvedSince(e.target.value)}
-              style={{ padding: '0.25rem 0.5rem' }}
-            />
-          </div>
-        )}
 
         <div className="tickets-list">
           <h2>Tous les Tickets</h2>
