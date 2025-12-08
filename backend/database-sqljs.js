@@ -5,6 +5,45 @@ const path = require('path');
 let db;
 let SQL;
 
+// Simple automatic backup mechanism to keep historical copies of the DB
+// Default: one backup per week (configurable via env WEEKLY_BACKUP_DAYS)
+const BACKUP_DAYS = parseInt(process.env.WEEKLY_BACKUP_DAYS || '7', 10);
+const BACKUP_INTERVAL_MS = BACKUP_DAYS * 24 * 60 * 60 * 1000; // every N days
+let lastBackupTime = 0;
+
+function createBackupIfNeeded() {
+  const now = Date.now();
+
+  // Avoid creating a backup on every write, only periodically
+  if (now - lastBackupTime < BACKUP_INTERVAL_MS) {
+    return;
+  }
+
+  try {
+    const dataDir = path.join(__dirname, 'data');
+    const dbPath = path.join(dataDir, 'tickets.db');
+
+    if (!fs.existsSync(dbPath)) {
+      return;
+    }
+
+    const backupDir = path.join(dataDir, 'backups');
+    if (!fs.existsSync(backupDir)) {
+      fs.mkdirSync(backupDir, { recursive: true });
+    }
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const backupPath = path.join(backupDir, `tickets-${timestamp}.db`);
+
+    fs.copyFileSync(dbPath, backupPath);
+    lastBackupTime = now;
+    console.log(`🧾 Database backup created: ${backupPath}`);
+  } catch (err) {
+    // Backup errors should never empêcher the main save
+    console.warn('⚠️ Error while creating database backup (ignored):', err.message);
+  }
+}
+
 async function init() {
   SQL = await initSqlJs();
   
@@ -174,6 +213,9 @@ function saveDatabase() {
     const tempPath = dbPath + '.tmp';
     fs.writeFileSync(tempPath, buffer, { flag: 'w' });
     fs.renameSync(tempPath, dbPath);
+
+    // Create a periodic backup snapshot so tickets can be restored
+    createBackupIfNeeded();
     
     // Verify file was written
     const stats = fs.statSync(dbPath);
